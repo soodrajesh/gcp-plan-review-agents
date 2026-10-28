@@ -40,7 +40,8 @@ def test_create_get_list_review(client):
 
 def test_store_keeps_plan_hash_not_plan(client):
     r = client.post("/api/reviews", json={"plan": sample("injection_attempt")}).json()
-    assert "evil.example" not in json.dumps(client.get(f"/api/reviews/{r['id']}").json()) or True
+    stored = json.dumps(client.get(f"/api/reviews/{r['id']}").json())
+    assert "IGNORE ALL PREVIOUS" not in stored  # plan strings are not persisted, only findings
     assert len(r["plan_sha256"]) == 64 and "resource_changes" not in r
 
 

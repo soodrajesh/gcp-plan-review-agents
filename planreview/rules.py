@@ -114,7 +114,7 @@ def is_iam(rc: ResourceChange) -> bool:
 
 @rule("SEC001", "security", "IAM grant to allUsers / allAuthenticatedUsers")
 def sec001(rc, p):
-    if not is_iam(rc) or rc.is_delete:
+    if not is_iam(rc) or rc.removed:
         return []
     a = after(rc)
     pub = [m for m in members(a) if m in PUBLIC_MEMBERS]
@@ -135,7 +135,7 @@ def sec001(rc, p):
 
 @rule("SEC002", "security", "Firewall rule allows ingress from 0.0.0.0/0")
 def sec002(rc, p):
-    if rc.type != "google_compute_firewall" or rc.is_delete:
+    if rc.type != "google_compute_firewall" or rc.removed:
         return []
     a = after(rc)
     if a.get("direction", "INGRESS") != "INGRESS" or a.get("disabled"):
@@ -174,7 +174,7 @@ def sec002(rc, p):
 
 @rule("SEC003", "security", "Bucket without uniform access / public access prevention")
 def sec003(rc, p):
-    if rc.type != "google_storage_bucket" or rc.is_delete:
+    if rc.type != "google_storage_bucket" or rc.removed:
         return []
     a = after(rc)
     hits = []
@@ -201,7 +201,7 @@ def sec003(rc, p):
 
 @rule("SEC004", "security", "Cloud SQL reachable from the public internet")
 def sec004(rc, p):
-    if rc.type != "google_sql_database_instance" or rc.is_delete:
+    if rc.type != "google_sql_database_instance" or rc.removed:
         return []
     ipc = block(block(after(rc), "settings"), "ip_configuration")
     nets = [n.get("value") for n in blocks(ipc, "authorized_networks")]
@@ -228,7 +228,7 @@ def sec004(rc, p):
 
 @rule("SEC005", "security", "Long-lived service account key created")
 def sec005(rc, p):
-    if rc.type == "google_service_account_key" and not rc.is_delete:
+    if rc.type == "google_service_account_key" and not rc.removed:
         return [
             Hit(
                 "high",
@@ -242,7 +242,7 @@ def sec005(rc, p):
 
 @rule("SEC006", "security", "Primitive Owner/Editor role granted")
 def sec006(rc, p):
-    if not is_iam(rc) or rc.is_delete:
+    if not is_iam(rc) or rc.removed:
         return []
     role = after(rc).get("role")
     if role in PRIMITIVE_ROLES:
@@ -262,7 +262,7 @@ def sec006(rc, p):
 
 @rule("COST001", "cost", "Large VM or GPU machine type")
 def cost001(rc, p):
-    if rc.is_delete:
+    if rc.removed:
         return []
     a = after(rc)
     mts = []
@@ -290,7 +290,7 @@ def cost001(rc, p):
 
 @rule("COST002", "cost", "Cloud Run scaling is unbounded or always-on")
 def cost002(rc, p):
-    if rc.type != "google_cloud_run_v2_service" or rc.is_delete:
+    if rc.type != "google_cloud_run_v2_service" or rc.removed:
         return []
     sc = block(block(after(rc), "template"), "scaling")
     mx, mn = sc.get("max_instance_count"), sc.get("min_instance_count") or 0
@@ -320,7 +320,7 @@ def cost002(rc, p):
 
 @rule("COST003", "cost", "Large or regional-HA Cloud SQL")
 def cost003(rc, p):
-    if rc.type != "google_sql_database_instance" or rc.is_delete:
+    if rc.type != "google_sql_database_instance" or rc.removed:
         return []
     s = block(after(rc), "settings")
     hits = []
@@ -348,7 +348,7 @@ def cost003(rc, p):
 
 @rule("COST004", "cost", "GKE node pool without a ceiling")
 def cost004(rc, p):
-    if rc.type != "google_container_node_pool" or rc.is_delete:
+    if rc.type != "google_container_node_pool" or rc.removed:
         return []
     a = after(rc)
     auto = block(a, "autoscaling")
@@ -366,7 +366,7 @@ def cost004(rc, p):
 
 @rule("COST005", "cost", "Very large persistent disk")
 def cost005(rc, p):
-    if rc.type != "google_compute_disk" or rc.is_delete:
+    if rc.type != "google_compute_disk" or rc.removed:
         return []
     a = after(rc)
     if (a.get("size") or 0) >= 1000 and "ssd" in str(a.get("type", "")):
@@ -409,7 +409,7 @@ def rel001(rc, p):
 
 @rule("REL002", "reliability", "Cloud SQL without deletion protection or backups")
 def rel002(rc, p):
-    if rc.type != "google_sql_database_instance" or rc.is_delete:
+    if rc.type != "google_sql_database_instance" or rc.removed:
         return []
     a = after(rc)
     hits = []
@@ -436,7 +436,7 @@ def rel002(rc, p):
 
 @rule("REL003", "reliability", "Bucket force_destroy or no versioning")
 def rel003(rc, p):
-    if rc.type != "google_storage_bucket" or rc.is_delete:
+    if rc.type != "google_storage_bucket" or rc.removed:
         return []
     a = after(rc)
     hits = []
@@ -463,7 +463,7 @@ def rel003(rc, p):
 
 @rule("REL004", "reliability", "Cloud Run service has no health probe")
 def rel004(rc, p):
-    if rc.type != "google_cloud_run_v2_service" or rc.is_delete:
+    if rc.type != "google_cloud_run_v2_service" or rc.removed:
         return []
     c = block(block(after(rc), "template"), "containers")
     if c and not (blocks(c, "startup_probe") or blocks(c, "liveness_probe")):
@@ -490,7 +490,7 @@ def _labels(rc: ResourceChange) -> dict[str, Any]:
 
 @rule("COMP001", "compliance", "Required labels missing")
 def comp001(rc, p):
-    if rc.type not in LABELED_TYPES or rc.is_delete:
+    if rc.type not in LABELED_TYPES or rc.removed:
         return []
     have = _labels(rc)
     missing = [k for k in p.required_labels if k not in have]
@@ -508,7 +508,7 @@ def comp001(rc, p):
 
 @rule("COMP002", "compliance", "Resource outside allowed locations")
 def comp002(rc, p):
-    if rc.is_delete:
+    if rc.removed:
         return []
     a = after(rc)
     loc = a.get("location") or a.get("region") or a.get("zone")
@@ -526,7 +526,7 @@ def comp002(rc, p):
 
 @rule("COMP003", "compliance", "Resource name violates naming convention")
 def comp003(rc, p):
-    if rc.is_delete:
+    if rc.removed:
         return []
     name = after(rc).get("name")
     if (

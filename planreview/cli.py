@@ -11,6 +11,7 @@ import asyncio
 import json
 import sys
 from datetime import date
+from pathlib import Path
 
 from .llm import Budget, LLMError, make_llm
 from .models import Review, Waiver
@@ -73,9 +74,11 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{r.id:8} {r.agent:12} {r.description}")
         return 0
     try:
-        doc = json.load(sys.stdin if a.plan == "-" else open(a.plan))
+        doc = json.load(sys.stdin) if a.plan == "-" else json.loads(Path(a.plan).read_text())
         waivers = (
-            [Waiver.model_validate(w) for w in json.load(open(a.waivers))] if a.waivers else []
+            [Waiver.model_validate(w) for w in json.loads(Path(a.waivers).read_text())]
+            if a.waivers
+            else []
         )
         review = asyncio.run(
             review_plan(

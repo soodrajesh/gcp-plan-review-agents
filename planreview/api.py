@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from importlib import resources
 from pathlib import Path
@@ -124,6 +125,7 @@ def create_app(settings: Settings | None = None, store: Store | None = None) -> 
 
     @app.exception_handler(Exception)
     async def unhandled(_: Request, exc: Exception):
+        logging.getLogger("planreview").exception("unhandled error", exc_info=exc)
         return JSONResponse({"detail": "internal error"}, status_code=500)
 
     return app

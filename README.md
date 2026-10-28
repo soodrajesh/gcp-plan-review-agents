@@ -54,7 +54,7 @@ PLANREVIEW_LLM=mock .venv/bin/uvicorn planreview.api:app_factory --factory --por
 `openai` (needs `OPENAI_API_KEY` and `pip install -e ".[openai]"`; for tests and evals only).
 
 Waivers: `--waivers waivers.json` with `[{"rule":"SEC002","address":"google_compute_firewall.*","reason":"CHG-123","expires":"2026-12-31"}]`.
-Expired waivers are ignored; model-proposed findings cannot be waived or are advisory anyway.
+Expired waivers are ignored. Waivers apply to rule findings only; model-proposed findings are advisory and never affect the verdict.
 
 ## Deploy to GCP
 
@@ -78,7 +78,7 @@ it the service silently drops to rules-only and says so), and `max_instance_coun
 
 | Check | Result |
 |---|---|
-| Offline tests (`pytest`) | 71 pass: every rule, orchestration, hostile-model cases, API, CLI |
+| Offline tests (`pytest`) | 72 pass, 3 opt-in live tests skipped: every rule, orchestration, hostile-model cases, API, CLI |
 | Hostile-model cases | hallucinated address, links in output, garbage JSON, provider error, timeout, budget stop, prompt injection, secret attributes never sent, cross-agent note ids |
 | Live Vertex + OpenAI tests | pass (`PLANREVIEW_LIVE_VERTEX=1`, `PLANREVIEW_LIVE_OPENAI=1`) |
 | Cross-provider eval (30 runs) | **0 invariant violations**: verdict unchanged, rule findings intact, no links; see [docs/eval-results.md](docs/eval-results.md) |
@@ -86,10 +86,9 @@ it the service silently drops to rules-only and says so), and `max_instance_coun
 
 ![Prompt-injection plan, live](docs/img/review-injection.png)
 
-Eval takeaways (10 runs per provider): gemini-2.5-flash proposed 2 extras and had 10 notes rejected by
-the critic for citing finding ids that did not exist; gpt-5-nano proposed 48 extras (all advisory) and
-had 24 rejected, so it is noisier, but cheaper (about $0.004 vs $0.016 for the 10 runs).
-Neither moved a verdict.
+Eval takeaways (10 runs per provider): gemini-2.5-flash proposed 4 extras and had 11 model items rejected
+by the critic (invented finding ids or resources); gpt-5-nano proposed 52 extras (all advisory) and had 16
+rejected, so it is noisier but cheaper (about $0.004 vs $0.017 for the 10 runs). Neither moved a verdict.
 
 ## Layout
 

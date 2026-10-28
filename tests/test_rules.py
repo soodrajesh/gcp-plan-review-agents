@@ -257,3 +257,14 @@ def test_compliance_rules():
     assert hits("COMP002", rc("google_storage_bucket", "b", after={"location": "us-east1"})) == []
     assert hits("COMP003", rc("google_storage_bucket", "b", after={"name": "Bad_Name"}))
     assert hits("COMP003", rc("google_storage_bucket", "b", after={"name": "good-name-1"})) == []
+
+
+def test_replaced_resources_are_still_checked_for_their_new_config():
+    """A destroy-then-create has a new `after` that must be reviewed like any create."""
+    risky = {
+        "settings": [{"ip_configuration": [{"authorized_networks": [{"value": "0.0.0.0/0"}]}]}]
+    }
+    repl = rc("google_sql_database_instance", "d", ["delete", "create"], before={}, after=risky)
+    assert hits("SEC004", repl)[0].severity == "critical"
+    gone = rc("google_sql_database_instance", "d", ["delete"], before=risky)
+    assert hits("SEC004", gone) == []

@@ -32,6 +32,11 @@ class ResourceChange(BaseModel):
         return "delete" in self.actions
 
     @property
+    def removed(self) -> bool:
+        """Destroyed with nothing taking its place; a replaced resource still has a new config to check."""
+        return "delete" in self.actions and "create" not in self.actions
+
+    @property
     def is_replace(self) -> bool:
         return "delete" in self.actions and "create" in self.actions
 
