@@ -98,7 +98,7 @@ tests/       offline suite + opt-in live tests     evals/run.py  cross-provider 
 terraform/   GCP stack                             scripts/      up/down, sample builder, self-review
 ```
 
-## Limits (honest)
+## Limits
 
 - Rules cover common GCP resources only (18 rules); an unknown resource type gets no findings and a
   clean plan is "no known problems", not proof of safety.
