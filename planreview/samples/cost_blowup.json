@@ -1,0 +1,119 @@
+{
+ "format_version": "1.2",
+ "terraform_version": "1.10.5",
+ "resource_changes": [
+  {
+   "address": "google_compute_instance.trainer",
+   "mode": "managed",
+   "type": "google_compute_instance",
+   "name": "trainer",
+   "provider_name": "registry.terraform.io/hashicorp/google",
+   "change": {
+    "actions": [
+     "create"
+    ],
+    "before": null,
+    "after": {
+     "name": "trainer",
+     "machine_type": "a2-highgpu-8g",
+     "zone": "us-central1-a",
+     "labels": {
+      "env": "prod",
+      "owner": "platform"
+     }
+    }
+   }
+  },
+  {
+   "address": "google_container_node_pool.big",
+   "mode": "managed",
+   "type": "google_container_node_pool",
+   "name": "big",
+   "provider_name": "registry.terraform.io/hashicorp/google",
+   "change": {
+    "actions": [
+     "create"
+    ],
+    "before": null,
+    "after": {
+     "name": "big",
+     "node_count": 40,
+     "node_config": [
+      {
+       "machine_type": "n2-standard-64"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "address": "google_compute_disk.scratch",
+   "mode": "managed",
+   "type": "google_compute_disk",
+   "name": "scratch",
+   "provider_name": "registry.terraform.io/hashicorp/google",
+   "change": {
+    "actions": [
+     "create"
+    ],
+    "before": null,
+    "after": {
+     "name": "scratch",
+     "size": 4000,
+     "type": "pd-ssd",
+     "zone": "us-central1-a",
+     "labels": {
+      "env": "prod",
+      "owner": "platform"
+     }
+    }
+   }
+  },
+  {
+   "address": "google_cloud_run_v2_service.burst-api",
+   "mode": "managed",
+   "type": "google_cloud_run_v2_service",
+   "name": "burst-api",
+   "provider_name": "registry.terraform.io/hashicorp/google",
+   "change": {
+    "actions": [
+     "create"
+    ],
+    "before": null,
+    "after": {
+     "name": "burst-api",
+     "location": "us-central1",
+     "ingress": "INGRESS_TRAFFIC_ALL",
+     "labels": {
+      "env": "prod",
+      "owner": "platform"
+     },
+     "template": [
+      {
+       "scaling": [
+        {
+         "min_instance_count": 3,
+         "max_instance_count": 1000
+        }
+       ],
+       "containers": [
+        {
+         "image": "us-docker.pkg.dev/proj/app/api:1",
+         "startup_probe": [
+          {
+           "http_get": [
+            {
+             "path": "/healthz"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  }
+ ]
+}

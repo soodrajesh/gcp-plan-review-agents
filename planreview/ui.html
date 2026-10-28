@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plan Review Agents</title>
+<style>
+:root{
+  --bg:#f6f7f9;--panel:#fff;--ink:#14181f;--mute:#5d6674;--line:#e2e5ea;--accent:#2a5bd7;
+  --ok:#157f4b;--ok-bg:#e3f5ec;--warn:#9a5b00;--warn-bg:#fdf0d9;--bad:#b3261e;--bad-bg:#fbe5e3;
+  --crit:#8a1c16;--high:#c2410c;--med:#a16207;--low:#0e7490;--info:#6b7280;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0f1218;--panel:#171b23;--ink:#e8ebf0;--mute:#98a1b0;--line:#2a303b;--accent:#7aa2ff;
+  --ok:#5fd39a;--ok-bg:#12301f;--warn:#f0b75a;--warn-bg:#3a2a0d;--bad:#ff8a80;--bad-bg:#40181a;
+  --crit:#ff8a80;--high:#fb923c;--med:#facc15;--low:#22d3ee;--info:#9ca3af;}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 24px;background:var(--panel);border-bottom:1px solid var(--line)}
+header h1{font-size:17px;margin:0;font-weight:650}
+.badges{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.badge{font-size:12px;padding:2px 9px;border:1px solid var(--line);border-radius:999px;color:var(--mute);background:var(--bg)}
+main{display:grid;grid-template-columns:340px 1fr;gap:20px;padding:20px 24px;max-width:1280px;margin:auto}
+@media(max-width:900px){main{grid-template-columns:1fr;padding:16px}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+.card h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin:0 0 10px;font-weight:600}
+label{display:block;font-size:12px;color:var(--mute);margin:8px 0 3px}
+select,textarea,button{font:inherit;color:var(--ink)}
+select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px}
+textarea{height:130px;font:12px/1.4 ui-monospace,Menlo,monospace;resize:vertical}
+button{background:var(--accent);color:#fff;border:0;border-radius:6px;padding:8px 14px;font-weight:600;cursor:pointer;margin-top:10px;width:100%}
+button:disabled{opacity:.5;cursor:wait}
+.hist{list-style:none;margin:0;padding:0}
+.hist li{display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:6px;cursor:pointer;border-bottom:1px solid var(--line)}
+.hist li:hover,.hist li.sel{background:var(--bg)}
+.hist .t{color:var(--mute);font-size:12px;margin-left:auto}
+.pill{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+.v-approve{background:var(--ok-bg);color:var(--ok)}.v-needs_changes{background:var(--warn-bg);color:var(--warn)}.v-block{background:var(--bad-bg);color:var(--bad)}
+.banner{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:10px;margin-bottom:16px;border:1px solid var(--line)}
+.banner.v-approve{background:var(--ok-bg)}.banner.v-needs_changes{background:var(--warn-bg)}.banner.v-block{background:var(--bad-bg)}
+.banner .big{font-size:22px;font-weight:750;letter-spacing:.01em}
+.banner.v-approve .big{color:var(--ok)}.banner.v-needs_changes .big{color:var(--warn)}.banner.v-block .big{color:var(--bad)}
+.stats{display:flex;gap:18px;flex-wrap:wrap;color:var(--mute);font-size:13px;margin:4px 0 0}
+.stats b{color:var(--ink)}
+.pipe{display:flex;gap:6px;flex-wrap:wrap;align-items:stretch}
+.node{flex:1;min-width:120px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--bg)}
+.node .n{font-weight:650;font-size:13px}.node .d{font-size:12px;color:var(--mute)}
+.node.err{border-color:var(--bad)}.node.skip{opacity:.55}
+.bars{margin-top:12px}.bar{display:flex;align-items:center;gap:8px;font-size:12px;margin:3px 0}
+.bar .l{width:150px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .track{flex:1;height:10px;background:var(--bg);border-radius:5px;position:relative}
+.bar .fill{position:absolute;height:100%;background:var(--accent);border-radius:5px;min-width:3px;opacity:.85}
+.bar .fill.err{background:var(--bad)}.bar .ms{width:60px;text-align:right;color:var(--mute)}
+.finding{border-left:4px solid var(--info);padding:8px 12px;margin:10px 0;background:var(--bg);border-radius:0 8px 8px 0}
+.finding.critical{border-color:var(--crit)}.finding.high{border-color:var(--high)}.finding.medium{border-color:var(--med)}.finding.low{border-color:var(--low)}
+.finding.waived{opacity:.55}
+.finding .h{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sev{font-size:11px;font-weight:700;text-transform:uppercase}
+.sev.critical{color:var(--crit)}.sev.high{color:var(--high)}.sev.medium{color:var(--med)}.sev.low{color:var(--low)}.sev.info{color:var(--info)}
+.chip{font-size:11px;padding:1px 7px;border-radius:4px;background:var(--line);color:var(--mute)}
+.addr{font:12px ui-monospace,Menlo,monospace;color:var(--mute);word-break:break-all}
+.finding .t{font-weight:600;margin:2px 0}.finding .m{color:var(--mute);font-size:13px}
+.finding .ctx{font-size:13px;margin-top:4px}
+.warn{background:var(--warn-bg);color:var(--warn);padding:8px 12px;border-radius:8px;margin-bottom:10px;font-size:13px}
+.dropped{font-size:13px;color:var(--mute);margin:4px 0}
+.err-msg{color:var(--bad);margin-top:8px;font-size:13px}
+.empty{color:var(--mute);padding:40px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <h1>Plan Review Agents</h1>
+  <span class="badge">security · cost · reliability · compliance → critic → judge</span>
+  <div class="badges" id="badges"></div>
+</header>
+<main>
+  <aside>
+    <div class="card">
+      <h2>Review a plan</h2>
+      <label for="sample">Sample plan</label>
+      <select id="sample"></select>
+      <label for="plan">Plan JSON (<code>terraform show -json</code>)</label>
+      <textarea id="plan" spellcheck="false" placeholder="Paste a plan, or pick a sample"></textarea>
+      <label for="llm">Model</label>
+      <select id="llm"></select>
+      <button id="run">Run review</button>
+      <div class="err-msg" id="err"></div>
+    </div>
+    <div class="card">
+      <h2>Recent reviews</h2>
+      <ul class="hist" id="hist"></ul>
+    </div>
+  </aside>
+  <section id="out"><div class="card empty">Pick a sample plan and run a review.</div></section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const VLABEL = {approve:"Approve", needs_changes:"Needs changes", block:"Block"};
+let cfg = {}, current = null;
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(body.detail || r.statusText);
+  return body;
+}
+
+async function refreshBadges() {
+  cfg = await api("/api/config");
+  $("badges").innerHTML =
+    `<span class="badge">${esc(cfg.rules)} rules</span>` +
+    `<span class="badge">default model: ${esc(cfg.provider)}${cfg.model ? " / " + esc(cfg.model) : ""}</span>` +
+    `<span class="badge">spend today $${cfg.spend_today_usd.toFixed(4)} / $${cfg.daily_budget_usd.toFixed(2)}</span>` +
+    `<span class="badge">store: ${esc(cfg.store)}</span>`;
+}
+
+async function init() {
+  await refreshBadges();
+  $("llm").innerHTML = cfg.allowed_providers.map(p => `<option ${p === cfg.provider ? "selected" : ""}>${esc(p)}</option>`).join("");
+  const names = await api("/api/samples");
+  $("sample").innerHTML = `<option value="">-- choose --</option>` + names.map(n => `<option>${esc(n)}</option>`).join("");
+  $("sample").onchange = async () => {
+    if (!$("sample").value) return;
+    $("plan").value = JSON.stringify(await api("/api/samples/" + $("sample").value), null, 1);
+  };
+  $("run").onclick = run;
+  await loadHistory();
+  const hash = location.hash.slice(1);
+  if (hash) show(await api("/api/reviews/" + hash));
+}
+
+async function loadHistory() {
+  const rows = await api("/api/reviews?limit=15");
+  $("hist").innerHTML = rows.map(r => `<li data-id="${esc(r.id)}" class="${current === r.id ? "sel" : ""}">
+    <span class="pill v-${r.verdict}">${VLABEL[r.verdict]}</span>
+    <span>${r.stats.resources} res · ${r.findings.filter(f => !f.waived).length} findings</span>
+    <span class="t">${esc(r.created_at.slice(11, 19))}</span></li>`).join("") || `<li style="cursor:default;color:var(--mute)">none yet</li>`;
+  document.querySelectorAll("#hist li[data-id]").forEach(li => li.onclick = async () => show(await api("/api/reviews/" + li.dataset.id)));
+}
+
+async function run() {
+  $("err").textContent = "";
+  let plan;
+  try { plan = JSON.parse($("plan").value); } catch (e) { $("err").textContent = "Plan is not valid JSON."; return; }
+  $("run").disabled = true; $("run").textContent = "Reviewing…";
+  try {
+    const r = await api("/api/reviews", {method: "POST", headers: {"content-type": "application/json"},
+      body: JSON.stringify({plan, llm: $("llm").value})});
+    show(r); await loadHistory();
+    await refreshBadges();
+  } catch (e) { $("err").textContent = e.message; }
+  finally { $("run").disabled = false; $("run").textContent = "Run review"; }
+}
+
+function show(r) {
+  current = r.id; location.hash = r.id;
+  const SEV = ["critical", "high", "medium", "low", "info"];
+  const total = Math.max(r.duration_ms, 1);
+  const agents = ["triage", "security", "cost", "reliability", "compliance", "critic", "judge"];
+  const node = a => {
+    const steps = r.trace.filter(s => s.agent === a);
+    const err = steps.some(s => s.status === "error"), skip = steps.length && steps.every(s => s.status === "skipped");
+    const ms = steps.reduce((t, s) => t + s.duration_ms, 0);
+    const note = steps.map(s => s.note).filter(Boolean).slice(0, 1)[0] || "";
+    return `<div class="node ${err ? "err" : ""} ${skip ? "skip" : ""}"><div class="n">${a}</div>
+      <div class="d">${skip ? "skipped" : ms + " ms"}${err ? " · degraded" : ""}</div><div class="d">${esc(note).slice(0, 70)}</div></div>`;
+  };
+  const bars = r.trace.filter(s => s.status !== "skipped").map(s => `<div class="bar">
+    <span class="l">${esc(s.agent)} · ${esc(s.action)}</span>
+    <span class="track"><span class="fill ${s.status === "error" ? "err" : ""}" style="left:${(s.start_ms / total * 100).toFixed(1)}%;width:${Math.max(s.duration_ms / total * 100, 0.5).toFixed(1)}%"></span></span>
+    <span class="ms">${s.duration_ms} ms</span></div>`).join("");
+  const findings = SEV.map(sev => r.findings.filter(f => f.severity === sev).map(f => `
+    <div class="finding ${f.severity} ${f.waived ? "waived" : ""}">
+      <div class="h"><span class="sev ${f.severity}">${f.severity}</span><span class="chip">${esc(f.agent)}</span>
+        <span class="chip">${esc(f.rule)}</span>${f.source === "llm" ? `<span class="chip">model-proposed · advisory</span>` : ""}
+        ${f.waived ? `<span class="chip">waived: ${esc(f.waiver_reason)}</span>` : ""}</div>
+      <div class="t">${esc(f.title)}</div><div class="addr">${esc(f.address)}</div>
+      ${f.detail ? `<div class="m">${esc(f.detail)}</div>` : ""}
+      ${f.remediation ? `<div class="m"><b>Fix:</b> ${esc(f.remediation)}</div>` : ""}
+      ${f.context ? `<div class="ctx"><b>${esc(r.provider)} note:</b> ${esc(f.context)}</div>` : ""}
+    </div>`).join("")).join("");
+  $("out").innerHTML = `
+    <div class="banner v-${r.verdict}">
+      <div><div class="big">${VLABEL[r.verdict].toUpperCase()}</div>
+      <div class="stats"><span><b>${r.stats.resources}</b> resources</span><span><b>${r.stats.create}</b> create</span>
+        <span><b>${r.stats.update}</b> update</span><span><b>${r.stats.delete}</b> delete</span><span><b>${r.stats.replace}</b> replace</span>
+        <span>${esc(r.provider)} / ${esc(r.model)}</span><span>$${r.cost_usd.toFixed(5)}</span><span>${r.duration_ms} ms</span></div></div>
+    </div>
+    <div class="card"><h2>Summary</h2>${esc(r.summary)}</div>
+    ${r.degraded.map(d => `<div class="warn">⚠ ${esc(d)}</div>`).join("")}
+    <div class="card"><h2>Orchestration</h2><div class="pipe">${agents.map(node).join("")}</div><div class="bars">${bars}</div></div>
+    <div class="card"><h2>Findings (${r.findings.filter(f => !f.waived).length} active)</h2>${findings || "<div class='m'>No findings.</div>"}
+      ${r.dropped.length ? `<h2 style="margin-top:16px">Rejected by critic</h2>` + r.dropped.map(d => `<div class="dropped">✗ ${esc(d.title)} — ${esc(d.reason)}</div>`).join("") : ""}</div>`;
+  document.querySelectorAll("#hist li").forEach(li => li.classList.toggle("sel", li.dataset.id === r.id));
+}
+init().catch(e => { $("err").textContent = e.message; });
+</script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+{
+ "format_version": "1.2",
+ "terraform_version": "1.10.5",
+ "resource_changes": [
+  {
+   "address": "google_compute_firewall.allow_all_ssh",
+   "mode": "managed",
+   "type": "google_compute_firewall",
+   "name": "allow_all_ssh",
+   "provider_name": "registry.terraform.io/hashicorp/google",
+   "change": {
+    "actions": [
+     "create"
+    ],
+    "before": null,
+    "after": {
+     "name": "allow-ssh",
+     "direction": "INGRESS",
+     "source_ranges": [
+      "0.0.0.0/0"
+     ],
+     "allow": [
+      {
+       "protocol": "tcp",
+       "ports": [
+        "22"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "address": "google_storage_bucket_iam_member.public_read",
+   "mode": "managed",
+   "type": "google_storage_bucket_iam_member",
+   "name": "public_read",
+   "provider_name": "registry.terraform.io/hashicorp/google",
+   "change": {
+    "actions": [
+     "create"
+    ],
+    "before": null,
+    "after": {
+     "bucket": "acme-exports",
+     "role": "roles/storage.objectViewer",
+     "member": "allUsers"
+    }
+   }
+  },
+  {
+   "address": "google_sql_database_instance.main",
+   "mode": "managed",
+   "type": "google_sql_database_instance",
+   "name": "main",
+   "provider_name": "registry.terraform.io/hashicorp/google",
+   "change": {
+    "actions": [
+     "create"
+    ],
+    "before": null,
+    "after": {
+     "name": "main-db",
+     "region": "us-central1",
+     "deletion_protection": false,
+     "settings": [
+      {
+       "tier": "db-custom-2-7680",
+       "availability_type": "ZONAL",
+       "user_labels": {
+        "env": "prod",
+        "owner": "platform"
+       },
+       "ip_configuration": [
+        {
+         "ipv4_enabled": true,
+         "authorized_networks": [
+          {
+           "value": "0.0.0.0/0"
+          }
+         ]
+        }
+       ],
+       "backup_configuration": [
+        {
+         "enabled": false
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "address": "google_service_account_key.ci_key",
+   "mode": "managed",
+   "type": "google_service_account_key",
+   "name": "ci_key",
+   "provider_name": "registry.terraform.io/hashicorp/google",
+   "change": {
+    "actions": [
+     "create"
+    ],
+    "before": null,
+    "after": {
+     "service_account_id": "ci"
+    }
+   }
+  },
+  {
+   "address": "google_project_iam_member.editor",
+   "mode": "managed",
+   "type": "google_project_iam_member",
+   "name": "editor",
+   "provider_name": "registry.terraform.io/hashicorp/google",
+   "change": {
+    "actions": [
+     "create"
+    ],
+    "before": null,
+    "after": {
+     "role": "roles/editor",
+     "member": "user:contractor@example.com"
+    }
+   }
+  },
+  {
+   "address": "google_storage_bucket.exports",
+   "mode": "managed",
+   "type": "google_storage_bucket",
+   "name": "exports",
+   "provider_name": "registry.terraform.io/hashicorp/google",
+   "change": {
+    "actions": [
+     "create"
+    ],
+    "before": null,
+    "after": {
+     "name": "Acme_Exports",
+     "location": "europe-west1",
+     "labels": {},
+     "uniform_bucket_level_access": false,
+     "public_access_prevention": "inherited",
+     "force_destroy": false,
+     "versioning": [
+      {
+       "enabled": true
+      }
+     ]
+    }
+   }
+  }
+ ]
+}

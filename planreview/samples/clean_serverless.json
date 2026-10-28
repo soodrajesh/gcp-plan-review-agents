@@ -1,0 +1,137 @@
+{
+ "format_version": "1.2",
+ "terraform_version": "1.10.5",
+ "resource_changes": [
+  {
+   "address": "google_cloud_run_v2_service.orders-api",
+   "mode": "managed",
+   "type": "google_cloud_run_v2_service",
+   "name": "orders-api",
+   "provider_name": "registry.terraform.io/hashicorp/google",
+   "change": {
+    "actions": [
+     "create"
+    ],
+    "before": null,
+    "after": {
+     "name": "orders-api",
+     "location": "us-central1",
+     "ingress": "INGRESS_TRAFFIC_ALL",
+     "labels": {
+      "env": "prod",
+      "owner": "platform"
+     },
+     "template": [
+      {
+       "scaling": [
+        {
+         "min_instance_count": 0,
+         "max_instance_count": 5
+        }
+       ],
+       "containers": [
+        {
+         "image": "us-docker.pkg.dev/proj/app/api:1",
+         "startup_probe": [
+          {
+           "http_get": [
+            {
+             "path": "/healthz"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "address": "google_storage_bucket.uploads",
+   "mode": "managed",
+   "type": "google_storage_bucket",
+   "name": "uploads",
+   "provider_name": "registry.terraform.io/hashicorp/google",
+   "change": {
+    "actions": [
+     "create"
+    ],
+    "before": null,
+    "after": {
+     "name": "acme-uploads",
+     "location": "US",
+     "labels": {
+      "env": "prod",
+      "owner": "platform"
+     },
+     "uniform_bucket_level_access": true,
+     "public_access_prevention": "enforced",
+     "force_destroy": false,
+     "versioning": [
+      {
+       "enabled": true
+      }
+     ]
+    }
+   }
+  },
+  {
+   "address": "google_cloud_run_v2_service_iam_member.invoker",
+   "mode": "managed",
+   "type": "google_cloud_run_v2_service_iam_member",
+   "name": "invoker",
+   "provider_name": "registry.terraform.io/hashicorp/google",
+   "change": {
+    "actions": [
+     "create"
+    ],
+    "before": null,
+    "after": {
+     "role": "roles/run.invoker",
+     "member": "serviceAccount:web@proj.iam.gserviceaccount.com"
+    }
+   }
+  },
+  {
+   "address": "google_sql_database_instance.orders",
+   "mode": "managed",
+   "type": "google_sql_database_instance",
+   "name": "orders",
+   "provider_name": "registry.terraform.io/hashicorp/google",
+   "change": {
+    "actions": [
+     "create"
+    ],
+    "before": null,
+    "after": {
+     "name": "orders-db",
+     "region": "us-central1",
+     "deletion_protection": true,
+     "settings": [
+      {
+       "tier": "db-custom-2-7680",
+       "availability_type": "ZONAL",
+       "user_labels": {
+        "env": "prod",
+        "owner": "platform"
+       },
+       "ip_configuration": [
+        {
+         "ipv4_enabled": false,
+         "authorized_networks": []
+        }
+       ],
+       "backup_configuration": [
+        {
+         "enabled": true
+        }
+       ]
+      }
+     ]
+    }
+   }
+  }
+ ]
+}
