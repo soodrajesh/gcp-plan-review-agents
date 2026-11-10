@@ -1,5 +1,7 @@
 # Architecture
 
+[![Architecture diagram](img/architecture.png)](img/architecture.svg)
+
 **Input**: `terraform show -json` plan. `plan.py` keeps managed resources whose actions are not
 no-op/read and rejects malformed or >2000-resource plans (HTTP 422 / CLI exit 3).
 

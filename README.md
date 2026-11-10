@@ -36,6 +36,12 @@ the review still completes with the rule findings and says so in `degraded`. A c
 fails **closed** (needs_changes). Details: [docs/architecture.md](docs/architecture.md),
 [docs/threat-model.md](docs/threat-model.md).
 
+## Architecture
+
+[![Architecture: private Cloud Run service, engine, read-only sources, optional Gemini, up.sh delivery](docs/img/architecture.png)](docs/img/architecture.svg)
+
+Regenerate with `python3 docs/diagrams/architecture.py` then `python3 docs/diagrams/render.py docs/img/architecture.svg docs/img/architecture.png` (needs Playwright).
+
 ## Quick start (local, no cloud)
 
 ```bash
